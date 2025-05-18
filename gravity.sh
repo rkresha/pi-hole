@@ -338,36 +338,37 @@ migrate_to_database() {
 
 # Determine if DNS resolution is available before proceeding
 gravity_CheckDNSResolutionAvailable() {
-  local lookupDomain="raw.githubusercontent.com" returnCode=""
+  local lookupDomain="raw.githubusercontent.com" returnCode=1
 
   # Determine if $lookupDomain is resolvable
   if timeout 4 getent hosts "${lookupDomain}" &>/dev/null; then
     echo -e "${OVER}  ${TICK} DNS resolution is available\\n"
-    return 0
+    returnCode=0
   else
     echo -e "  ${CROSS} DNS resolution is currently unavailable"
   fi
 
-  str="Waiting up to 120 seconds for DNS resolution..."
-  echo -ne "  ${INFO} ${str}"
+  if [[ "${returnCode}" -ne 0 ]]; then
+    str="Waiting up to 120 seconds for DNS resolution..."
+    echo -ne "  ${INFO} ${str}"
 
- # Default DNS timeout is two seconds, plus 1 second for each dot > 120 seconds
-  for ((i = 0; i < 40; i++)); do
-      if getent hosts github.com &> /dev/null; then
-        # If we reach this point, DNS resolution is available
-        echo -e "${OVER}  ${TICK} DNS resolution is available"
-        returnCode=0
-        break
-      fi
-      # Append one dot for each second waiting
-      echo -ne "."
-      sleep 1
-  done
+  # Default DNS timeout is two seconds, plus 1 second for each dot > 120 seconds
+    for ((i = 0; i < 40; i++)); do
+        if getent hosts github.com &> /dev/null; then
+          # If we reach this point, DNS resolution is available
+          echo -e "${OVER}  ${TICK} DNS resolution is available"
+          returnCode=0
+          break
+        fi
+        # Append one dot for each second waiting
+        echo -ne "."
+        sleep 1
+    done
+    
+  fi
 
-  # DNS resolution is still unavailable after 120 seconds
-  returnCode=1
+  # If DNS resolution is still unavailable after 120 seconds .. return initial value of 1
   return ${returnCode}
-
 }
 
 # Function: try_restore_backup
