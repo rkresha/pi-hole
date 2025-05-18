@@ -338,7 +338,7 @@ migrate_to_database() {
 
 # Determine if DNS resolution is available before proceeding
 gravity_CheckDNSResolutionAvailable() {
-  local lookupDomain="raw.githubusercontent.com"
+  local lookupDomain="raw.githubusercontent.com" returnCode=""
 
   # Determine if $lookupDomain is resolvable
   if timeout 4 getent hosts "${lookupDomain}" &>/dev/null; then
@@ -356,6 +356,7 @@ gravity_CheckDNSResolutionAvailable() {
       if getent hosts github.com &> /dev/null; then
         # If we reach this point, DNS resolution is available
         echo -e "${OVER}  ${TICK} DNS resolution is available"
+        returnCode=0
         break
       fi
       # Append one dot for each second waiting
@@ -364,7 +365,8 @@ gravity_CheckDNSResolutionAvailable() {
   done
 
   # DNS resolution is still unavailable after 120 seconds
-  return 1
+  returnCode=1
+  return ${returnCode}
 
 }
 
